@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加载本地GeoJSON文件</title>
+    <!-- 引入Leaflet的CSS文件 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* 设置地图容器的高度 */
+        #map { height: 600px; }
+    </style>
+</head>
+<body>
+    <!-- 地图容器 -->
+    <div id="map"></div>
+
+    <!-- 引入Leaflet的JavaScript文件 -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // 初始化地图，设置中心点和缩放级别
+        var map = L.map('map').setView([29.0, 120.0], 7);
+
+        // 添加OpenStreetMap底图
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // 加载本地的GeoJSON文件
+        fetch('../../static/map/天津市.json') 
+            .then(response => response.json()) // 将响应解析为JSON
+            .then(data => {
+                // 将GeoJSON数据添加到地图上
+                L.geoJSON(data).addTo(map);
+            })
+            .catch(error => {
+                console.error('加载GeoJSON文件时出错:', error); // 错误处理
+            });
+    </script>
+</body>
+</html>

@@ -6,7 +6,7 @@ from .forms import Login, SearchBookForm, ChangePasswordForm, EditInfoForm, Sear
 from .. import db
 from ..models import Admin, Book, Inventory, Student, ReadBook
 import time, datetime
-
+import geopandas as gpd
 
 @main.route('/', methods=['GET', 'POST'])
 def login():
@@ -380,3 +380,12 @@ def bookin():
                 'start_date': start_date, 'due_date': due_date}
         data.append(item)
     return jsonify(data)
+
+
+@main.route('/map_test', methods=['GET', 'POST'])
+def map_test():
+
+    # gdf = gpd.read_file('your_shapefile.shp')
+    # geojson_data = gdf.to_json()
+    # return jsonify(geojson_data)
+    return render_template('main/map-test.html')
