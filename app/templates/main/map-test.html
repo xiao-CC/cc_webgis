@@ -1,21 +1,40 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>加载本地GeoJSON文件</title>
-    <!-- 引入Leaflet的CSS文件 -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        /* 设置地图容器的高度 */
-        #map { height: 600px; }
-    </style>
-</head>
-<body>
-    <!-- 地图容器 -->
-    <div id="map"></div>
+{% extends "main/base-user.html" %}
+{% block title %}查询图书信息{% endblock %}
 
-    <!-- 引入Leaflet的JavaScript文件 -->
+
+{% block body %}
+    <div style="width: 1200px;margin: auto">
+    <br />
+    <form class="layui-form" method="post" id="searchForm">
+    {{ form.csrf_token }}
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <div class="layui-row layui-col-space10">
+                    <div class="layui-col-md4">
+                        {{ form.method(class="layui-input-inline") }}
+                    </div>
+                    <div class="layui-col-md6">
+                        <label class="layui-form-label">查询内容：</label>
+                        <div class="layui-input-inline">
+                            {{ form.content(class="layui-input",style="width:250px") }}
+                        </div>
+                    </div>
+                    <div class="layui-col-md2">
+                        <div class="layui-input-inline">{{ form.submit(class="layui-btn", id="search") }}</div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+    <table id="test" lay-filter="test"></table>
+    </div>
+
+    <div id="map" style="height: 780px;"></div>
+{% endblock %}
+
+{% block script %}
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         // 初始化地图，设置中心点和缩放级别
@@ -37,5 +56,81 @@
                 console.error('加载GeoJSON文件时出错:', error); // 错误处理
             });
     </script>
-</body>
-</html>
+
+    <script>
+    layui.use(['form','table','jquery'], function(){
+        var form = layui.form;
+        var table = layui.table;
+        var $ = layui.$;
+
+        table.init('re', {
+              height: 390
+              ,limit: 7
+              ,page: true
+        });
+
+        $(document).ready(function(){
+            $('#search').on('click',function () {
+                var form = new FormData(document.getElementById("searchForm"));
+                if($('#content').val() === ""){
+                    layui.use('layer', function(){
+                        var layer = layui.layer;
+
+                        layer.msg('请填写查询内容',{time: 800});
+                    });
+                }
+                else{
+                    $.ajax({
+                        url:"{{ url_for('main.find_book') }}",
+                        type:"post",
+                        data:form,
+                        processData:false,
+                        contentType:false,
+                        success:function(data){
+                            if (data.length !== 0){
+                                $('#remove').remove();
+                                table.render({
+                                    elem: '#test'
+                                    ,data:data
+                                    ,cols: [[
+                                      {field:'isbn', title:'ISBN', width:140}
+                                      ,{field:'book_name', title:'书名', width:200}
+                                      ,{field:'press', title:'出版社', width:180}
+                                      ,{field:'author', title:'作者', width:140}
+                                      ,{field:'class_name', title:'类别', width:200}
+                                      ,{field:'count', title:'馆藏数量', width:120}
+                                      ,{field:'available', title:'可借数量'}
+                                    ]]
+                                    ,page: true
+                                    ,height: 390
+                                    ,limit: 7
+                                    ,response: {
+                                      statusCode: 200 //重新规定成功的状态码为 200，table 组件默认为 0
+                                    }
+                                    ,parseData: function(data){ //将原始数据解析成 table 组件所规定的数据
+                                      return {
+                                        "code": data.status, //解析接口状态
+                                        "msg": data.message, //解析提示文本
+                                        "count": data.total, //解析数据长度
+                                        "data": data.rows.item //解析数据列表
+                                      };
+                                    }
+                                });
+                            }
+                            else{
+                                layui.use('layer', function(){
+                                    var layer = layui.layer;
+
+                                    layer.msg('未找到任何结果',{time: 1000});
+                                });
+                            }
+                        }
+                    });
+                }
+                return false;
+            })
+        });
+
+    });
+    </script>
+{% endblock %}
