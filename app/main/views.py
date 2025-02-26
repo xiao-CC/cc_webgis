@@ -6,7 +6,8 @@ from .forms import Login, SearchBookForm, ChangePasswordForm, EditInfoForm, Sear
 from .. import db
 from ..models import Admin, Book, Inventory, Student, ReadBook
 import time, datetime
-import geopandas as gpd
+import json
+import os
 
 @main.route('/', methods=['GET', 'POST'])
 def login():
@@ -384,8 +385,27 @@ def bookin():
 
 @main.route('/map_test', methods=['GET', 'POST'])
 def map_test():
-    # gdf = gpd.read_file('your_shapefile.shp')
-    # geojson_data = gdf.to_json()
-    # return jsonify(geojson_data)
-    form = SearchBookForm()
-    return render_template('main/map-test.html',form=form)
+    return render_template('main/map-test.html')
+
+@main.route('/find_map', methods=['POST'])
+def find_map():
+
+    filename = request.get_json().get('search')
+    if not filename:
+        return jsonify({"error": "缺少搜索参数"}), 400
+    geojson_dir = 'C:/Users/ceefh/Desktop/cc_webgis/app/static/map/'
+    
+    try:
+        # 拼接完整文件路径并加载GeoJSON文件
+        filepath = os.path.join(geojson_dir, filename+'.json')
+        print(filepath)
+        with open(filepath, 'r', encoding='utf-8') as f:
+            geojson_data = json.load(f)
+        return jsonify(geojson_data)
+        
+    except FileNotFoundError:
+        return jsonify({"error": "文件未找到"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "文件格式错误"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
